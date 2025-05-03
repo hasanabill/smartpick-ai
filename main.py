@@ -10,6 +10,7 @@ import re
 data = pd.read_csv("smartphones.csv")
 
 
+# Model train and preprocess
 def preprocess_and_train():
     numerical_features = [
         "price",
