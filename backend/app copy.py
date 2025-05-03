@@ -1,68 +1,18 @@
-import pandas as pd
-from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
-from sklearn.preprocessing import StandardScaler, OneHotEncoder
-from sklearn.compose import ColumnTransformer
-from sklearn.pipeline import Pipeline
+from flask import Flask, request, jsonify
+from flask_cors import CORS
 import joblib
+import pandas as pd
 import re
 
-data = pd.read_csv("smartphones.csv")
+# Load model and dataset
+model = joblib.load("../phone_recommendation_model.pkl")
+data = pd.read_csv("../smartphones.csv")
+
+app = Flask(__name__)
+CORS(app)  # Enable CORS for React frontend
 
 
-def preprocess_and_train():
-    numerical_features = [
-        "price",
-        "ram_capacity",
-        "battery_capacity",
-        "internal_memory",
-        "primary_camera_rear",
-        "primary_camera_front",
-        "processor_speed",
-        "screen_size",
-        "refresh_rate",
-        "num_cores",
-        "resolution_height",
-        "resolution_width",
-    ]
-    categorical_features = [
-        "5G_or_not",
-        "fast_charging_available",
-        "fast_charging",
-        "extended_memory_available",
-        "processor_brand",
-        "os",
-    ]
-    features = numerical_features + categorical_features
-    target = "avg_rating"
-
-    X = data[features]
-    y = data[target]
-
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=0.2, random_state=42
-    )
-
-    numeric_transformer = StandardScaler()
-    categorical_transformer = OneHotEncoder(handle_unknown="ignore")
-
-    preprocessor = ColumnTransformer(
-        transformers=[
-            ("num", numeric_transformer, numerical_features),
-            ("cat", categorical_transformer, categorical_features),
-        ]
-    )
-
-    model = Pipeline(
-        steps=[("preprocessor", preprocessor), ("regressor", LinearRegression())]
-    )
-
-    model.fit(X_train, y_train)
-
-    joblib.dump(model, "phone_recommendation_model.pkl")
-    print("Model trained and saved successfully!")
-
-
+# Existing feature extraction and recommendation logic
 def extract_features_from_query(query):
     query = query.lower()
     price = None
@@ -123,7 +73,7 @@ def extract_features_from_query(query):
 
 
 def recommend_phones(query, top_n=5):
-    model = joblib.load("phone_recommendation_model.pkl")
+    model = joblib.load("../phone_recommendation_model.pkl")
 
     numerical_features = [
         "price",
@@ -214,14 +164,16 @@ def recommend_phones(query, top_n=5):
     ]
 
 
+@app.route("/api/recommend", methods=["POST"])
+def recommend():
+    query = request.json.get("query", "")
+    recommendations = recommend_phones(query)
+    if isinstance(recommendations, str):
+        return jsonify({"message": recommendations, "data": []})
+    return jsonify(
+        {"message": "success", "data": recommendations.to_dict(orient="records")}
+    )
+
+
 if __name__ == "__main__":
-    print("📱 SmartPick.ai – Ask me about phones! (Type 'exit' to quit)")
-    preprocess_and_train()
-    while True:
-        query = input("\n🧠 Your Query: ").strip().lower()
-        if query in ["exit", "quit"]:
-            print("👋 Goodbye!")
-            break
-        result = recommend_phones(query)
-        print("\n🔍 Top Results:\n")
-        print(result if isinstance(result, str) else result.to_string(index=False))
+    app.run(port=5000)
