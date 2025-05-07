@@ -57,7 +57,7 @@ function App() {
               }`}
             >
               <div
-                className={`max-w-lg w-fit px-4 py-3 rounded-xl shadow ${
+                className={`max-w- w-fit px-4 py-3 rounded-xl shadow ${
                   msg.sender === "user"
                     ? "bg-blue-600 text-white rounded-br-none"
                     : "bg-white text-black rounded-bl-none"
