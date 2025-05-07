@@ -20,6 +20,9 @@ def extract_features_from_query(query):
     battery = None
     camera = None
     rear_cameras = None
+    screen_size = None
+    refresh_rate = None
+    is_5g = None
 
     if "under" in query:
         price = (
@@ -62,12 +65,32 @@ def extract_features_from_query(query):
             else None
         )
 
+    if "inch screen" in query:
+        screen_size = (
+            float(re.search(r"(\d+(\.\d+)?) inch screen", query).group(1))
+            if re.search(r"(\d+(\.\d+)?) inch screen", query)
+            else None
+        )
+
+    if "hz refresh rate" in query:
+        refresh_rate = (
+            int(re.search(r"(\d+) hz refresh rate", query).group(1))
+            if re.search(r"(\d+) hz refresh rate", query)
+            else None
+        )
+
+    if "5g" in query:
+        is_5g = 1 if "5g" in query else 0
+
     features = {
         "price": price if price else 50000,
         "ram_capacity": ram if ram else 6,
         "battery_capacity": battery if battery else 4000,
         "primary_camera_rear": camera if camera else 48,
         "num_rear_cameras": rear_cameras if rear_cameras else 2,
+        "screen_size": screen_size if screen_size else 6.5,
+        "refresh_rate": refresh_rate if refresh_rate else 60,
+        "5G_or_not": is_5g if is_5g is not None else 0,
     }
     return features
 
